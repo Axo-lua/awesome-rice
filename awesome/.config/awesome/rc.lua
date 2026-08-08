@@ -18,6 +18,10 @@ local naughty = require("naughty")
 local ruled = require("ruled")
 local menubar = require("menubar")
 local hotkeys_popup = require("awful.hotkeys_popup")
+local lain = require("lain")
+local markup = lain.util.markup
+local theme = require("theme")
+
 -- Enable hotkeys help widget for VIM and other apps
 -- when client with a matching name is opened:
 require("awful.hotkeys_popup.keys")
@@ -107,6 +111,33 @@ mykeyboardlayout = awful.widget.keyboardlayout()
 -- Create a textclock widget
 mytextclock = wibox.widget.textclock()
 
+local mpdicon = wibox.widget.imagebox()
+local mpd = lain.widget.mpd({
+    settings = function()
+        mpd_notification_preset = {
+            text = string.format("%s [%s] - %s\n%s", mpd_now.artist,
+                   mpd_now.album, mpd_now.date, mpd_now.title)
+        }
+
+        if mpd_now.state == "play" then
+            artist = mpd_now.artist .. " > "
+            title  = mpd_now.title .. " "
+            mpdicon:set_image(theme.widget_note_on)
+        elseif mpd_now.state == "pause" then
+            artist = "mpd "
+            title  = "paused "
+        else
+            artist = ""
+            title  = ""
+            --mpdicon:set_image() -- not working in 4.0
+            mpdicon._private.image = nil
+            mpdicon:emit_signal("widget::redraw_needed")
+            mpdicon:emit_signal("widget::layout_changed")
+        end
+        widget:set_markup(markup.fontfg(theme.font, "#e54c62", artist) .. markup.fontfg(theme.font, "#b2b2b2", title))
+    end
+})
+
 -- @DOC_FOR_EACH_SCREEN@
 screen.connect_signal("request::desktop_decoration", function(s)
     -- Each screen has its own tag table.
@@ -177,11 +208,12 @@ screen.connect_signal("request::desktop_decoration", function(s)
                 mylauncher,
                 s.mytaglist,
                 s.mypromptbox,
+                mpdicon,
+                mpd.widget,
             },
             s.mytasklist, -- Middle widget
             { -- Right widgets
                 layout = wibox.layout.fixed.horizontal,
-                mykeyboardlayout,
                 wibox.widget.systray(),
                 mytextclock,
                 s.mylayoutbox,
@@ -208,8 +240,6 @@ awful.mouse.append_global_mousebindings({
 awful.keyboard.append_global_keybindings({
     awful.key({ modkey,           }, "s",      hotkeys_popup.show_help,
               {description="show help", group="awesome"}),
-    awful.key({ modkey,           }, "w", function () mymainmenu:show() end,
-              {description = "show main menu", group = "awesome"}),
     awful.key({ modkey, "Control" }, "r", awesome.restart,
               {description = "reload awesome", group = "awesome"}),
     awful.key({ modkey, "Shift"   }, "q", awesome.quit,
@@ -274,11 +304,11 @@ awful.keyboard.append_global_keybindings({
             end
         end,
         {description = "go back", group = "client"}),
-    awful.key({ modkey, "Control" }, "j", function () awful.screen.focus_relative( 1) end,
+    awful.key({ modkey, "Control" }, "n", function () awful.screen.focus_relative( 1) end,
               {description = "focus the next screen", group = "screen"}),
-    awful.key({ modkey, "Control" }, "k", function () awful.screen.focus_relative(-1) end,
+    awful.key({ modkey, "Control" }, "e", function () awful.screen.focus_relative(-1) end,
               {description = "focus the previous screen", group = "screen"}),
-    awful.key({ modkey, "Control" }, "n",
+    awful.key({ modkey, "Control" }, "k",
               function ()
                   local c = awful.client.restore()
                   -- Focus restored client
@@ -297,17 +327,17 @@ awful.keyboard.append_global_keybindings({
               {description = "swap with previous client by index", group = "client"}),
     awful.key({ modkey,           }, "u", awful.client.urgent.jumpto,
               {description = "jump to urgent client", group = "client"}),
-    awful.key({ modkey,           }, "l",     function () awful.tag.incmwfact( 0.05)          end,
+    awful.key({ modkey,           }, "i",     function () awful.tag.incmwfact( 0.05)          end,
               {description = "increase master width factor", group = "layout"}),
-    awful.key({ modkey,           }, "h",     function () awful.tag.incmwfact(-0.05)          end,
+    awful.key({ modkey,           }, "m",     function () awful.tag.incmwfact(-0.05)          end,
               {description = "decrease master width factor", group = "layout"}),
-    awful.key({ modkey, "Shift"   }, "h",     function () awful.tag.incnmaster( 1, nil, true) end,
+    awful.key({ modkey, "Shift"   }, "m",     function () awful.tag.incnmaster( 1, nil, true) end,
               {description = "increase the number of master clients", group = "layout"}),
-    awful.key({ modkey, "Shift"   }, "l",     function () awful.tag.incnmaster(-1, nil, true) end,
+    awful.key({ modkey, "Shift"   }, "i",     function () awful.tag.incnmaster(-1, nil, true) end,
               {description = "decrease the number of master clients", group = "layout"}),
-    awful.key({ modkey, "Control" }, "h",     function () awful.tag.incncol( 1, nil, true)    end,
+    awful.key({ modkey, "Control" }, "m",     function () awful.tag.incncol( 1, nil, true)    end,
               {description = "increase the number of columns", group = "layout"}),
-    awful.key({ modkey, "Control" }, "l",     function () awful.tag.incncol(-1, nil, true)    end,
+    awful.key({ modkey, "Control" }, "i",     function () awful.tag.incncol(-1, nil, true)    end,
               {description = "decrease the number of columns", group = "layout"}),
     awful.key({ modkey,           }, "space", function () awful.layout.inc( 1)                end,
               {description = "select next", group = "layout"}),
@@ -427,7 +457,7 @@ client.connect_signal("request::default_keybindings", function()
                 c.minimized = true
             end ,
             {description = "minimize", group = "client"}),
-        awful.key({ modkey,           }, "m",
+        awful.key({ modkey,           }, "#",
             function (c)
                 c.maximized = not c.maximized
                 c:raise()

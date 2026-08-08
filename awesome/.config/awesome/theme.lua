@@ -6,10 +6,15 @@
 local themes_path = require("gears.filesystem").get_themes_dir()
 local rnotification = require("ruled.notification")
 local dpi = require("beautiful.xresources").apply_dpi
+local gears = require("gears")
+local lain  = require("lain")
+local awful = require("awful")
+local wibox = require("wibox")
+local markup = lain.util.markup
 
 -- {{{ Main
 local theme = {}
-theme.wallpaper = "/home/axo/wallpaper.png"
+theme.wallpaper = "/home/axo/.config/awesome/wallpaper.png"
 -- }}}
 
 -- {{{ Styles
@@ -124,6 +129,7 @@ theme.titlebar_maximized_button_focus_active  = themes_path .. "zenburn/titlebar
 theme.titlebar_maximized_button_normal_active = themes_path .. "zenburn/titlebar/maximized_normal_active.png"
 theme.titlebar_maximized_button_focus_inactive  = themes_path .. "zenburn/titlebar/maximized_focus_inactive.png"
 theme.titlebar_maximized_button_normal_inactive = themes_path .. "zenburn/titlebar/maximized_normal_inactive.png"
+
 -- }}}
 -- }}}
 
