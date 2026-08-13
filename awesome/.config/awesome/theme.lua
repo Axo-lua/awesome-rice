@@ -14,7 +14,7 @@ local markup = lain.util.markup
 
 -- {{{ Main
 local theme = {}
-theme.wallpaper = "/home/axo/.config/awesome/wallpaper.png"
+theme.wallpaper = "/home/axo/.dots/awesome/.config/awesome/wallpaper.png"
 -- }}}
 
 -- {{{ Styles
@@ -129,6 +129,15 @@ theme.titlebar_maximized_button_focus_active  = themes_path .. "zenburn/titlebar
 theme.titlebar_maximized_button_normal_active = themes_path .. "zenburn/titlebar/maximized_normal_active.png"
 theme.titlebar_maximized_button_focus_inactive  = themes_path .. "zenburn/titlebar/maximized_focus_inactive.png"
 theme.titlebar_maximized_button_normal_inactive = themes_path .. "zenburn/titlebar/maximized_normal_inactive.png"
+
+theme.widget_note = "/home/axo/.config/awesome/icons/note.png"
+theme.widget_note_on = "/home/axo/.config/awesome/icons/note_on.png"
+
+theme.widget_pause = "/home/axo/.config/awesome/icons/pause.png"
+theme.widget_next = "/home/axo/.config/awesome/icons/next.png"
+theme.widget_previous = "/home/axo/.config/awesome/icons/prev.png"
+theme.widget_play = "/home/axo/.config/awesome/icons/play.png"
+theme.widget_divisor = "/home/axo/.config/awesome/icons/divisor.png"
 
 -- }}}
 -- }}}

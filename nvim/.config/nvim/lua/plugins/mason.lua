@@ -3,7 +3,7 @@ return {
     {
         'mason-org/mason-lspconfig.nvim',
         opts = {
-            ensure_installed = { "rust_analyzer", "html", "cssls", },
+            ensure_installed = { "rust_analyzer", "html", "cssls" },
         },
         dependencies = {
             { 'mason-org/mason.nvim', opts = {} },

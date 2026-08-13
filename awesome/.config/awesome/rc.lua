@@ -31,11 +31,11 @@ require("awful.hotkeys_popup.keys")
 -- another config (This code will only ever execute for the fallback config)
 -- @DOC_ERROR_HANDLING@
 naughty.connect_signal("request::display_error", function(message, startup)
-    naughty.notification {
-        urgency = "critical",
-        title   = "Oops, an error happened"..(startup and " during startup!" or "!"),
-        message = message
-    }
+  naughty.notification {
+    urgency = "critical",
+    title   = "Oops, an error happened"..(startup and " during startup!" or "!"),
+    message = message
+  }
 end)
 -- }}}
 
@@ -57,13 +57,14 @@ modkey = "Mod4"
 -- {{{ Menu
 -- @DOC_MENU@
 
-mylauncher = awful.widget.button({ image = beautiful.awesome_icon })
-    mylauncher:buttons(gears.table.join(
-        mylauncher:buttons(),
-        awful.button({}, 1, nil, function ()
-            awful.spawn("rofi -show drun")
-        end)
-    ))
+mylauncher = awful.widget.button({
+  image = beautiful.awesome_icon,
+  buttons = {
+    awful.button({}, 1, nil, function ()
+      awful.spawn("rofi -show drun")
+    end)
+  }
+})
 
 -- Menubar configuration
 menubar.utils.terminal = terminal -- Set the terminal for applications that require it
@@ -73,33 +74,33 @@ menubar.utils.terminal = terminal -- Set the terminal for applications that requ
 -- @DOC_LAYOUT@
 -- Table of layouts to cover with awful.layout.inc, order matters.
 tag.connect_signal("request::default_layouts", function()
-    awful.layout.append_default_layouts({
-        awful.layout.suit.tile,
-        awful.layout.suit.floating,
-        awful.layout.suit.fair,
-        awful.layout.suit.fair.horizontal
-    })
+  awful.layout.append_default_layouts({
+    awful.layout.suit.tile,
+    awful.layout.suit.floating,
+    awful.layout.suit.fair,
+    awful.layout.suit.fair.horizontal
+  })
 end)
 -- }}}
 
 -- {{{ Wallpaper
 -- @DOC_WALLPAPER@
 screen.connect_signal("request::wallpaper", function(s)
-    awful.wallpaper {
-        screen = s,
-        widget = {
-            {
-                image     = beautiful.wallpaper,
-                upscale   = true,
-                downscale = true,
-                widget    = wibox.widget.imagebox,
-            },
-            valign = "center",
-            halign = "center",
-            tiled  = false,
-            widget = wibox.container.tile,
-        }
+  awful.wallpaper {
+    screen = s,
+    widget = {
+      {
+        image     = beautiful.wallpaper,
+        upscale   = true,
+        downscale = true,
+        widget    = wibox.widget.imagebox,
+      },
+      valign = "center",
+      halign = "center",
+      tiled  = false,
+      widget = wibox.container.tile,
     }
+  }
 end)
 -- }}}
 
@@ -111,115 +112,147 @@ mykeyboardlayout = awful.widget.keyboardlayout()
 -- Create a textclock widget
 mytextclock = wibox.widget.textclock()
 
-local mpdicon = wibox.widget.imagebox()
-local mpd = lain.widget.mpd({
-    settings = function()
-        mpd_notification_preset = {
-            text = string.format("%s [%s] - %s\n%s", mpd_now.artist,
-                   mpd_now.album, mpd_now.date, mpd_now.title)
-        }
+local dv = wibox.widget.textbox(" - ")
 
-        if mpd_now.state == "play" then
-            artist = mpd_now.artist .. " > "
-            title  = mpd_now.title .. " "
-            mpdicon:set_image(theme.widget_note_on)
-        elseif mpd_now.state == "pause" then
-            artist = "mpd "
-            title  = "paused "
-        else
-            artist = ""
-            title  = ""
-            --mpdicon:set_image() -- not working in 4.0
-            mpdicon._private.image = nil
-            mpdicon:emit_signal("widget::redraw_needed")
-            mpdicon:emit_signal("widget::layout_changed")
-        end
-        widget:set_markup(markup.fontfg(theme.font, "#e54c62", artist) .. markup.fontfg(theme.font, "#b2b2b2", title))
+local pausebutton = awful.widget.button({
+  image = theme.widget_play,
+  resize = false,
+  buttons = {
+    awful.button({}, 1, nil, function ()
+      awful.spawn("mpc toggle")
+    end)
+  }
+})
+
+local nextbutton = awful.widget.button({
+  image = theme.widget_next,
+  resize = false,
+  buttons = {
+    awful.button({}, 1, nil, function ()
+      awful.spawn("mpc next")
+    end)
+  }
+})
+
+local previousbutton = awful.widget.button({
+  image = theme.widget_previous,
+  resize = false,
+  buttons = {
+    awful.button({}, 1, nil, function ()
+      awful.spawn("mpc prev")
+    end)
+  }
+})
+
+mpd = lain.widget.mpd({
+  settings = function()
+    mpd_notification_preset = {
+      text = string.format("%s [%s] - %s\n%s", mpd_now.artist, mpd_now.date, mpd_now.title, mpd_now.album)
+    }
+    if mpd_now.state == "play" then
+      artist = mpd_now.artist .. " > "
+      title  = mpd_now.title .. " "
+      pausebutton.image = theme.widget_pause
+    elseif mpd_now.state == "pause" then
+      artist = "mpd "
+      title  = "paused "
+      pausebutton.image = theme.widget_play
+      pausebutton:emit_signal("widget::redraw_needed")
+    else
+      artist = ""
+      title  = "Nothing playing "
+      pausebutton.image = theme.widget_play
+      pausebutton:emit_signal("widget::redraw_needed")
     end
+    widget:set_markup(markup.fontfg(theme.font, "#e54c62", artist) .. markup.fontfg(theme.font, "#b2b2b2", title))
+  end
 })
 
 -- @DOC_FOR_EACH_SCREEN@
 screen.connect_signal("request::desktop_decoration", function(s)
-    -- Each screen has its own tag table.
-    awful.tag({ "1", "2", "3", "4", "5" }, s, awful.layout.layouts[1])
+  -- Each screen has its own tag table.
+  awful.tag({ "1", "2", "3", "4", "5" }, s, awful.layout.layouts[1])
 
-    -- Create a promptbox for each screen
-    s.mypromptbox = awful.widget.prompt()
+  -- Create a promptbox for each screen
+  s.mypromptbox = awful.widget.prompt()
 
-    -- Create an imagebox widget which will contain an icon indicating which layout we're using.
-    -- We need one layoutbox per screen.
-    s.mylayoutbox = awful.widget.layoutbox {
-        screen  = s,
-        buttons = {
-            awful.button({ }, 1, function () awful.layout.inc( 1) end),
-            awful.button({ }, 3, function () awful.layout.inc(-1) end),
-            awful.button({ }, 4, function () awful.layout.inc(-1) end),
-            awful.button({ }, 5, function () awful.layout.inc( 1) end),
-        }
+  -- Create an imagebox widget which will contain an icon indicating which layout we're using.
+  -- We need one layoutbox per screen.
+  s.mylayoutbox = awful.widget.layoutbox {
+    screen  = s,
+    buttons = {
+      awful.button({ }, 1, function () awful.layout.inc( 1) end),
+      awful.button({ }, 3, function () awful.layout.inc(-1) end),
+      awful.button({ }, 4, function () awful.layout.inc(-1) end),
+      awful.button({ }, 5, function () awful.layout.inc( 1) end),
     }
+  }
 
-    -- Create a taglist widget
-    s.mytaglist = awful.widget.taglist {
-        screen  = s,
-        filter  = awful.widget.taglist.filter.all,
-        buttons = {
-            awful.button({ }, 1, function(t) t:view_only() end),
-            awful.button({ modkey }, 1, function(t)
-                                            if client.focus then
-                                                client.focus:move_to_tag(t)
-                                            end
-                                        end),
-            awful.button({ }, 3, awful.tag.viewtoggle),
-            awful.button({ modkey }, 3, function(t)
-                                            if client.focus then
-                                                client.focus:toggle_tag(t)
-                                            end
-                                        end),
-            awful.button({ }, 4, function(t) awful.tag.viewprev(t.screen) end),
-            awful.button({ }, 5, function(t) awful.tag.viewnext(t.screen) end),
-        }
+  -- Create a taglist widget
+  s.mytaglist = awful.widget.taglist {
+    screen  = s,
+    filter  = awful.widget.taglist.filter.all,
+    buttons = {
+      awful.button({ }, 1, function(t) t:view_only() end),
+      awful.button({ modkey }, 1, function(t)
+        if client.focus then
+          client.focus:move_to_tag(t)
+        end
+      end),
+      awful.button({ }, 3, awful.tag.viewtoggle),
+      awful.button({ modkey }, 3, function(t)
+        if client.focus then
+          client.focus:toggle_tag(t)
+        end
+      end),
+      awful.button({ }, 4, function(t) awful.tag.viewprev(t.screen) end),
+      awful.button({ }, 5, function(t) awful.tag.viewnext(t.screen) end),
     }
+  }
 
     -- @TASKLIST_BUTTON@
     -- Create a tasklist widget
-    s.mytasklist = awful.widget.tasklist {
-        screen  = s,
-        filter  = awful.widget.tasklist.filter.currenttags,
-        buttons = {
-            awful.button({ }, 1, function (c)
-                c:activate { context = "tasklist", action = "toggle_minimization" }
-            end),
-            awful.button({ }, 3, function() awful.menu.client_list { theme = { width = 250 } } end),
-            awful.button({ }, 4, function() awful.client.focus.byidx(-1) end),
-            awful.button({ }, 5, function() awful.client.focus.byidx( 1) end),
-        }
+  s.mytasklist = awful.widget.tasklist {
+    screen  = s,
+    filter  = awful.widget.tasklist.filter.currenttags,
+    buttons = {
+      awful.button({ }, 1, function (c)
+        c:activate { context = "tasklist", action = "toggle_minimization" }
+      end),
+      awful.button({ }, 3, function() awful.menu.client_list { theme = { width = 250 } } end),
+      awful.button({ }, 4, function() awful.client.focus.byidx(-1) end),
+      awful.button({ }, 5, function() awful.client.focus.byidx( 1) end),
     }
+  }
 
     -- @DOC_WIBAR@
     -- Create the wibox
-    s.mywibox = awful.wibar {
-        position = "top",
-        screen   = s,
-        -- @DOC_SETUP_WIDGETS@
-        widget   = {
-            layout = wibox.layout.align.horizontal,
-            { -- Left widgets
-                layout = wibox.layout.fixed.horizontal,
-                mylauncher,
-                s.mytaglist,
-                s.mypromptbox,
-                mpdicon,
-                mpd.widget,
-            },
-            s.mytasklist, -- Middle widget
-            { -- Right widgets
-                layout = wibox.layout.fixed.horizontal,
-                wibox.widget.systray(),
-                mytextclock,
-                s.mylayoutbox,
-            },
-        }
+  s.mywibox = awful.wibar {
+    position = "top",
+    screen   = s,
+    -- @DOC_SETUP_WIDGETS@
+    widget   = {
+      layout = wibox.layout.align.horizontal,
+      { -- Left widgets
+        layout = wibox.layout.fixed.horizontal,
+        mylauncher,
+        s.mytaglist,
+        s.mypromptbox,
+        dv,
+        previousbutton,
+        pausebutton,
+        nextbutton,
+        mpd.widget,
+      },
+      s.mytasklist, -- Middle widget
+      { -- Right widgets
+        layout = wibox.layout.fixed.horizontal,
+        wibox.widget.systray(),
+        mytextclock,
+        s.mylayoutbox,
+      },
     }
+  }
 end)
 
 -- }}}
@@ -227,9 +260,9 @@ end)
 -- {{{ Mouse bindings
 -- @DOC_ROOT_BUTTONS@
 awful.mouse.append_global_mousebindings({
-    awful.button({ }, 3, function () mymainmenu:toggle() end),
-    awful.button({ }, 4, awful.tag.viewprev),
-    awful.button({ }, 5, awful.tag.viewnext),
+  awful.button({ }, 3, function () mymainmenu:toggle() end),
+  awful.button({ }, 4, awful.tag.viewprev),
+  awful.button({ }, 5, awful.tag.viewnext),
 })
 -- }}}
 
@@ -238,58 +271,60 @@ awful.mouse.append_global_mousebindings({
 
 -- General Awesome keys
 awful.keyboard.append_global_keybindings({
-    awful.key({ modkey,           }, "s",      hotkeys_popup.show_help,
-              {description="show help", group="awesome"}),
-    awful.key({ modkey, "Control" }, "r", awesome.restart,
-              {description = "reload awesome", group = "awesome"}),
-    awful.key({ modkey, "Shift"   }, "q", awesome.quit,
-              {description = "quit awesome", group = "awesome"}),
-    awful.key({ modkey }, "x",
-              function ()
-                  awful.prompt.run {
-                    prompt       = "Run Lua code: ",
-                    textbox      = awful.screen.focused().mypromptbox.widget,
-                    exe_callback = awful.util.eval,
-                    history_path = awful.util.get_cache_dir() .. "/history_eval"
-                  }
-              end,
-              {description = "lua execute prompt", group = "awesome"}),
-    awful.key({ modkey,           }, "Return", function () awful.spawn(terminal) end,
-              {description = "open a terminal", group = "launcher"}),
-    awful.key({ modkey },            "r",     function () awful.spawn("rofi -show drun") end,
-              {description = "run prompt", group = "launcher"}),
-    awful.key({ modkey },	     "b",     function () awful.spawn("firefox") end,
+  awful.key({ modkey,           }, "s",      hotkeys_popup.show_help,
+            {description="show help", group="awesome"}),
+  awful.key({ modkey, "Control" }, "r", awesome.restart,
+            {description = "reload awesome", group = "awesome"}),
+  awful.key({ modkey, "Shift"   }, "q", awesome.quit,
+            {description = "quit awesome", group = "awesome"}),
+  awful.key({ modkey }, "x",
+            function ()
+              awful.prompt.run {
+                prompt       = "Run Lua code: ",
+                textbox      = awful.screen.focused().mypromptbox.widget,
+                exe_callback = awful.util.eval,
+                history_path = awful.util.get_cache_dir() .. "/history_eval"
+              }
+            end,
+            {description = "lua execute prompt", group = "awesome"}),
+  awful.key({ modkey,           }, "Return", function () awful.spawn(terminal) end,
+            {description = "open a terminal", group = "launcher"}),
+  awful.key({ modkey },            "r",     function () awful.spawn("rofi -show drun") end,
+            {description = "run prompt", group = "launcher"}),
+
+  awful.key({ modkey },	     "b",     function () awful.spawn("firefox") end,
     	      {description = "open firefox", group = "applications"}),
-    awful.key({ modkey },            "d",     function () awful.spawn("wezterm -e concord") end,
+  awful.key({ modkey },            "d",     function () awful.spawn("wezterm -e concord") end,
     	      {description = "open discord", group = "applications"}),
-    awful.key({ modkey },            "y",     function () awful.spawn("wezterm -e yazi") end,
-              {description = "open file manager", group = "applications"}),
-    awful.key({ modkey, "Shift" },   "n",     function () awful.spawn("pamixer -d 5") end,
-              {description = "decrease volume", group = "volume control"}),
-    awful.key({ modkey, "Shift" },   "e",     function () awful.spawn("pamixer -i 5") end,
-              {description = "increase volume", group = "volume control"}),
-    awful.key({ modkey, "Shift" },   "i",      function () awful.spawn("pamixer -t") end,
-              {description = "toggle mute", group = "volume control"}),
+  awful.key({ modkey },            "y",     function () awful.spawn("wezterm -e yazi") end,
+            {description = "open file manager", group = "applications"}),
+
+  awful.key({ modkey, "Shift" },   "n",     function () awful.spawn("pamixer -d 5") end,
+            {description = "decrease volume", group = "volume control"}),
+  awful.key({ modkey, "Shift" },   "e",     function () awful.spawn("pamixer -i 5") end,
+            {description = "increase volume", group = "volume control"}),
+  awful.key({ modkey, "Shift" },   "i",      function () awful.spawn("pamixer -t") end,
+            {description = "toggle mute", group = "volume control"}),
 })
 
 -- Tags related keybindings
 awful.keyboard.append_global_keybindings({
-    awful.key({ modkey,           }, "Left",   awful.tag.viewprev,
-              {description = "view previous", group = "tag"}),
-    awful.key({ modkey,           }, "Right",  awful.tag.viewnext,
-              {description = "view next", group = "tag"}),
-    awful.key({ modkey,           }, "Escape", awful.tag.history.restore,
-              {description = "go back", group = "tag"}),
+  awful.key({ modkey,           }, "Left",   awful.tag.viewprev,
+            {description = "view previous", group = "tag"}),
+  awful.key({ modkey,           }, "Right",  awful.tag.viewnext,
+            {description = "view next", group = "tag"}),
+  awful.key({ modkey,           }, "Escape", awful.tag.history.restore,
+            {description = "go back", group = "tag"}),
 })
 
 -- Focus related keybindings
 awful.keyboard.append_global_keybindings({
-    awful.key({ modkey,           }, "j",
-        function ()
-            awful.client.focus.byidx( 1)
-        end,
-        {description = "focus next by index", group = "client"}
-    ),
+  awful.key({ modkey,           }, "j",
+    function ()
+      awful.client.focus.byidx( 1)
+    end,
+    {description = "focus next by index", group = "client"}
+  ),
     awful.key({ modkey,           }, "k",
         function ()
             awful.client.focus.byidx(-1)
